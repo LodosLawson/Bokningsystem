@@ -1,24 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  updateProfile,
-} from 'firebase/auth';
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-} from 'firebase/firestore';
-import {
-  auth,
-  db,
-  googleProvider,
-  testConnection,
-} from '../firebase/config';
 import { AppUser, LanguageCode, UserProfile } from '../types';
 
 interface AuthContextType {
@@ -37,261 +17,184 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOCAL_SESSION_KEY = 'randevu_active_session';
-const LOCAL_PROFILE_KEY = 'randevu_local_profile';
+const SESSION_KEY = 'bokalist_active_session';
+const PROFILE_KEY = 'bokalist_profile';
+const REGISTERED_USERS_KEY = 'bokalist_registered_accounts';
+
+interface StoredAccount {
+  uid: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  businessName: string;
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>(() => {
-    const saved = localStorage.getItem('randevu_lang');
-    if (saved && ['tr', 'en', 'az', 'ku', 'sv'].includes(saved)) {
+    const saved = localStorage.getItem('bokalist_lang');
+    if (saved && (saved === 'en' || saved === 'sv')) {
       return saved as LanguageCode;
     }
-    return 'tr';
+    return 'en';
   });
 
   const setLanguage = (lang: LanguageCode) => {
     setCurrentLanguage(lang);
-    localStorage.setItem('randevu_lang', lang);
+    localStorage.setItem('bokalist_lang', lang);
     if (user && userProfile) {
       updateProfileData({ language: lang }).catch(() => {});
     }
   };
 
-  // Test server connection on boot
+  // Restore session on boot
   useEffect(() => {
-    testConnection().catch(() => {});
+    try {
+      const savedSession = localStorage.getItem(SESSION_KEY);
+      const savedProfile = localStorage.getItem(PROFILE_KEY);
+      if (savedSession) {
+        const u = JSON.parse(savedSession) as AppUser;
+        setUser(u);
+        if (savedProfile) {
+          setUserProfile(JSON.parse(savedProfile));
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading saved session:', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Fetch or initialize user profile doc in Firestore
-  const syncUserProfile = async (currentUser: { uid: string; email: string | null; displayName: string | null }) => {
-    const userDocRef = doc(db, 'users', currentUser.uid);
-    try {
-      const snap = await getDoc(userDocRef);
-      if (snap.exists()) {
-        const data = snap.data() as UserProfile;
-        setUserProfile(data);
-        if (data.language && ['tr', 'en', 'az', 'ku', 'sv'].includes(data.language)) {
-          setCurrentLanguage(data.language);
-          localStorage.setItem('randevu_lang', data.language);
-        }
-      } else {
-        const newProfile: UserProfile = {
-          userId: currentUser.uid,
-          email: currentUser.email || 'user@randevupro.app',
-          displayName: currentUser.displayName || 'İşletme Sahibi',
-          businessName: 'Benim Salonum & İşletmem',
-          currency: '₺',
-          language: currentLanguage,
-          createdAt: new Date().toISOString(),
-        };
-        await setDoc(userDocRef, newProfile);
-        setUserProfile(newProfile);
-      }
-    } catch (err) {
-      console.warn('Sync profile Firestore fallback to local profile:', err);
-      // Fallback local profile
-      const localProfile: UserProfile = {
-        userId: currentUser.uid,
-        email: currentUser.email || 'user@randevupro.app',
-        displayName: currentUser.displayName || 'İşletme Sahibi',
-        businessName: 'Benim Salonum & İşletmem',
-        currency: '₺',
-        language: currentLanguage,
-        createdAt: new Date().toISOString(),
-      };
-      setUserProfile(localProfile);
+  // Simple local account registration (works everywhere on Netlify without any third party)
+  const signupWithEmail = async (name: string, email: string, pass: string, businessName?: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const rawUsers = localStorage.getItem(REGISTERED_USERS_KEY);
+    const users: StoredAccount[] = rawUsers ? JSON.parse(rawUsers) : [];
+
+    const existing = users.find((u) => u.email === cleanEmail);
+    if (existing) {
+      throw new Error('An account with this email already exists. Please sign in.');
     }
-  };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        const appUser: AppUser = {
-          uid: currentUser.uid,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-          photoURL: currentUser.photoURL,
-        };
-        setUser(appUser);
-        try {
-          await syncUserProfile(currentUser);
-        } catch (e) {
-          console.warn('Profile sync warning:', e);
-        }
-        setLoading(false);
-      } else {
-        // Check for local guest session
-        try {
-          const savedSession = localStorage.getItem(LOCAL_SESSION_KEY);
-          const savedProfile = localStorage.getItem(LOCAL_PROFILE_KEY);
-          if (savedSession) {
-            const parsedUser = JSON.parse(savedSession) as AppUser;
-            setUser(parsedUser);
-            if (savedProfile) {
-              setUserProfile(JSON.parse(savedProfile));
-            }
-          } else {
-            setUser(null);
-            setUserProfile(null);
-          }
-        } catch {
-          setUser(null);
-          setUserProfile(null);
-        }
-        setLoading(false);
-      }
-    });
+    const uid = `user_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const newAccount: StoredAccount = {
+      uid,
+      name: name.trim() || 'Business Owner',
+      email: cleanEmail,
+      passwordHash: pass, // Simple local credential storage
+      businessName: businessName?.trim() || 'My Salon & Studio',
+    };
 
-    return () => unsubscribe();
-  }, []);
+    users.push(newAccount);
+    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
 
-  const signInWithGoogle = async () => {
-    try {
-      const cred = await signInWithPopup(auth, googleProvider);
-      if (cred.user) {
-        const appUser: AppUser = {
-          uid: cred.user.uid,
-          email: cred.user.email,
-          displayName: cred.user.displayName,
-          photoURL: cred.user.photoURL,
-        };
-        setUser(appUser);
-        localStorage.removeItem(LOCAL_SESSION_KEY);
-        await syncUserProfile(cred.user);
-      }
-    } catch (error: unknown) {
-      const errCode = (error as { code?: string })?.code || '';
-      console.warn('Google Sign In result notice:', errCode);
-      throw error;
-    }
+    const appUser: AppUser = {
+      uid,
+      email: cleanEmail,
+      displayName: newAccount.name,
+    };
+
+    const profile: UserProfile = {
+      userId: uid,
+      email: cleanEmail,
+      displayName: newAccount.name,
+      businessName: newAccount.businessName,
+      currency: 'kr',
+      language: currentLanguage,
+      createdAt: new Date().toISOString(),
+    };
+
+    setUser(appUser);
+    setUserProfile(profile);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(appUser));
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   };
 
   const loginWithEmail = async (email: string, pass: string) => {
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      if (cred.user) {
-        const appUser: AppUser = {
-          uid: cred.user.uid,
-          email: cred.user.email,
-          displayName: cred.user.displayName,
-        };
-        setUser(appUser);
-        localStorage.removeItem(LOCAL_SESSION_KEY);
-        await syncUserProfile(cred.user);
+    const cleanEmail = email.trim().toLowerCase();
+    const rawUsers = localStorage.getItem(REGISTERED_USERS_KEY);
+    const users: StoredAccount[] = rawUsers ? JSON.parse(rawUsers) : [];
+
+    const account = users.find((u) => u.email === cleanEmail && u.passwordHash === pass);
+    if (!account) {
+      // If no accounts yet, or credentials don't match, check if it's the first time
+      if (users.length === 0) {
+        // Auto register on first attempt for convenience
+        await signupWithEmail(email.split('@')[0], email, pass, 'Bokalist Studio');
+        return;
       }
-    } catch (error: unknown) {
-      console.warn('Email login notice:', error);
-      throw error;
+      throw new Error('Invalid email or password.');
     }
+
+    const appUser: AppUser = {
+      uid: account.uid,
+      email: account.email,
+      displayName: account.name,
+    };
+
+    const profile: UserProfile = {
+      userId: account.uid,
+      email: account.email,
+      displayName: account.name,
+      businessName: account.businessName,
+      currency: 'kr',
+      language: currentLanguage,
+      createdAt: new Date().toISOString(),
+    };
+
+    setUser(appUser);
+    setUserProfile(profile);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(appUser));
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   };
 
-  const signupWithEmail = async (name: string, email: string, pass: string, businessName?: string) => {
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      if (cred.user) {
-        if (name) {
-          try {
-            await updateProfile(cred.user, { displayName: name });
-          } catch (pErr) {
-            console.warn('DisplayName update note:', pErr);
-          }
-        }
-        const appUser: AppUser = {
-          uid: cred.user.uid,
-          email: cred.user.email,
-          displayName: name || cred.user.displayName,
-        };
-        setUser(appUser);
-        localStorage.removeItem(LOCAL_SESSION_KEY);
-
-        const newProfile: UserProfile = {
-          userId: cred.user.uid,
-          email,
-          displayName: name || 'Kullanıcı',
-          businessName: businessName || 'Randevu Merkezi',
-          currency: '₺',
-          language: currentLanguage,
-          createdAt: new Date().toISOString(),
-        };
-
-        try {
-          await setDoc(doc(db, 'users', cred.user.uid), newProfile);
-          setUserProfile(newProfile);
-        } catch {
-          setUserProfile(newProfile);
-        }
-      }
-    } catch (error: unknown) {
-      console.warn('Email signup notice:', error);
-      throw error;
-    }
+  // Google sign in placeholder ready for when Google is connected
+  const signInWithGoogle = async () => {
+    // When Google is integrated later, this can call Google Auth
+    await continueAsGuest('Mehemmed', 'MehemmedAC@gmail.com');
   };
 
-  /**
-   * Instant local demo / guest login
-   */
+  // 1-Click Instant Demo / Guest access
   const continueAsGuest = async (customName?: string, customEmail?: string) => {
+    const uid = 'bokalist_default_user';
     const guestUser: AppUser = {
-      uid: 'local_admin_user',
+      uid,
       email: customEmail || 'MehemmedAC@gmail.com',
       displayName: customName || 'Mehemmed',
     };
 
     const guestProfile: UserProfile = {
-      userId: guestUser.uid,
+      userId: uid,
       email: guestUser.email || '',
       displayName: guestUser.displayName || 'Mehemmed',
-      businessName: 'Randevu & Rezervasyon Salonu',
-      currency: '₺',
+      businessName: 'Bokalist Studio & Spa',
+      currency: 'kr',
       language: currentLanguage,
       createdAt: new Date().toISOString(),
     };
 
     setUser(guestUser);
     setUserProfile(guestProfile);
-
-    try {
-      localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(guestUser));
-      localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(guestProfile));
-    } catch (e) {
-      console.warn('Local storage session write warning:', e);
-    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify(guestUser));
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(guestProfile));
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch {
-      // Ignore if not signed in to Firebase
-    }
-    localStorage.removeItem(LOCAL_SESSION_KEY);
-    localStorage.removeItem(LOCAL_PROFILE_KEY);
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(PROFILE_KEY);
     setUser(null);
     setUserProfile(null);
   };
 
   const updateProfileData = async (updates: Partial<UserProfile>) => {
     if (!user) return;
-    setUserProfile((prev) => (prev ? { ...prev, ...updates } : null));
-
-    // Save to local storage
-    try {
-      const current = userProfile ? { ...userProfile, ...updates } : null;
-      if (current) {
-        localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(current));
-      }
-    } catch {}
-
-    // If real Firebase auth, also update Firestore
-    if (auth.currentUser && !user.uid.startsWith('local_')) {
-      try {
-        await updateDoc(doc(db, 'users', user.uid), updates);
-      } catch (err) {
-        console.warn('Profile Firestore update note:', err);
-      }
+    const current = userProfile ? { ...userProfile, ...updates } : null;
+    setUserProfile(current);
+    if (current) {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(current));
     }
   };
 

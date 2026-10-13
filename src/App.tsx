@@ -198,7 +198,7 @@ const DashboardContent: React.FC = () => {
           <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-sky-400" />
             <p className="text-sm">
-              {currentLanguage === 'sv' ? 'Laddar bokningar...' : currentLanguage === 'en' ? 'Loading bookings...' : 'Randevular yükleniyor...'}
+              {currentLanguage === 'sv' ? 'Laddar bokningar...' : 'Loading bookings...'}
             </p>
           </div>
         ) : (

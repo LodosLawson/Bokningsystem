@@ -3,17 +3,20 @@ import {
   X,
   Settings,
   Scissors,
-  DollarSign,
   Plus,
   Trash2,
   Globe,
   Building,
   Check,
   Sparkles,
+  Download,
+  Upload,
+  HardDrive,
 } from 'lucide-react';
 import { ServiceItem, LanguageCode, UserProfile } from '../types';
 import { languageNames, translations } from '../i18n/translations';
 import { useAuth } from '../context/AuthContext';
+import { exportAllData, importDataFromFile } from '../services/bookingService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -39,7 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const { user, userProfile, currentLanguage, setLanguage } = useAuth();
   const t = translations[currentLanguage];
 
-  const [activeTab, setActiveTab] = useState<'services' | 'business' | 'language'>('services');
+  const [activeTab, setActiveTab] = useState<'services' | 'business' | 'language' | 'backup'>('services');
 
   // New service inputs
   const [newServiceName, setNewServiceName] = useState('');
@@ -49,8 +52,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   // Business settings
   const [businessNameInput, setBusinessNameInput] = useState(userProfile?.businessName || '');
-  const [currencyInput, setCurrencyInput] = useState(currency || '₺');
+  const [currencyInput, setCurrencyInput] = useState(currency || 'kr');
   const [savingProfile, setSavingProfile] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
 
   if (!isOpen || !user) return null;
 
@@ -82,12 +86,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // Pre-load common sample services if user has none
   const handleLoadSampleServices = async () => {
     setSavingService(true);
-    const samples = [
-      { name: 'Saç Kesimi & Yıkama', price: 250, durationMinutes: 40 },
-      { name: 'Sakal Tıraşı & Bakım', price: 150, durationMinutes: 20 },
-      { name: 'Özel Cilt Bakımı', price: 400, durationMinutes: 60 },
-      { name: 'Saç Boyama & Röfle', price: 650, durationMinutes: 90 },
-      { name: 'Manikür & Pedikür', price: 300, durationMinutes: 45 },
+    const samples = currentLanguage === 'sv' ? [
+      { name: 'Klippning & Styling', price: 350, durationMinutes: 45 },
+      { name: 'Skäggvård & Formning', price: 200, durationMinutes: 25 },
+      { name: 'Ansiktsbehandling', price: 450, durationMinutes: 60 },
+      { name: 'Färgning & Slingor', price: 750, durationMinutes: 90 },
+      { name: 'Manikyr & Spa', price: 300, durationMinutes: 40 },
+    ] : [
+      { name: 'Haircut & Styling', price: 350, durationMinutes: 45 },
+      { name: 'Beard Trim & Grooming', price: 200, durationMinutes: 25 },
+      { name: 'Facial Skin Treatment', price: 450, durationMinutes: 60 },
+      { name: 'Hair Coloring & Highlights', price: 750, durationMinutes: 90 },
+      { name: 'Manicure & Spa', price: 300, durationMinutes: 40 },
     ];
     try {
       for (const sample of samples) {
@@ -120,6 +130,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  const handleExportBackup = () => {
+    exportAllData(user.uid);
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      await importDataFromFile(user.uid, file);
+      setImportStatus(currentLanguage === 'sv' ? 'Säkerhetskopia återställd!' : 'Backup restored successfully!');
+      setTimeout(() => setImportStatus(null), 3000);
+    } catch {
+      setImportStatus(currentLanguage === 'sv' ? 'Kunde inte läsa filen.' : 'Failed to import file.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
       <div className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-6 shadow-2xl text-slate-100 my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto">
@@ -138,10 +164,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-slate-800 mt-3">
+        <div className="flex border-b border-slate-800 mt-3 overflow-x-auto">
           <button
             onClick={() => setActiveTab('services')}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition ${
               activeTab === 'services'
                 ? 'border-sky-500 text-sky-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -152,18 +178,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('business')}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition ${
               activeTab === 'business'
                 ? 'border-sky-500 text-sky-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <Building className="w-4 h-4" />
-            <span>{t.businessName} & {t.currency}</span>
+            <span>{t.businessName}</span>
           </button>
           <button
             onClick={() => setActiveTab('language')}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition ${
               activeTab === 'language'
                 ? 'border-sky-500 text-sky-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -171,6 +197,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           >
             <Globe className="w-4 h-4" />
             <span>{t.language}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('backup')}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition ${
+              activeTab === 'backup'
+                ? 'border-sky-500 text-sky-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <HardDrive className="w-4 h-4" />
+            <span>{t.dataBackup}</span>
           </button>
         </div>
 
@@ -190,7 +227,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     required
                     value={newServiceName}
                     onChange={(e) => setNewServiceName(e.target.value)}
-                    placeholder="Örn: Saç Kesimi, Cilt Bakımı, Masaj..."
+                    placeholder={currentLanguage === 'sv' ? 'T.ex. Klippning, Massage...' : 'e.g., Haircut, Massage...'}
                     className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
@@ -202,7 +239,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     required
                     value={newServicePrice}
                     onChange={(e) => setNewServicePrice(e.target.value)}
-                    placeholder={`Fiyat (${currency})`}
+                    placeholder={`${t.defaultPrice} (${currency})`}
                     className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
@@ -219,7 +256,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onChange={(e) => setNewServiceDuration(e.target.value)}
                     className="w-16 px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white"
                   />
-                  <span className="text-xs text-slate-500">dk</span>
+                  <span className="text-xs text-slate-500">min</span>
                 </div>
                 <button
                   type="submit"
@@ -251,7 +288,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {presetServices.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-800 rounded-xl">
-                  Henüz kayıtlı önceden tanımlı işlem yok. Yukarıdaki formdan ekleyebilirsiniz.
+                  {currentLanguage === 'sv' ? 'Inga förvalda tjänster än.' : 'No preset services yet.'}
                 </p>
               ) : (
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -265,7 +302,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           {srv.name}
                         </div>
                         <div className="text-[11px] text-slate-400">
-                          {srv.durationMinutes ? `${srv.durationMinutes} dk • ` : ''}
+                          {srv.durationMinutes ? `${srv.durationMinutes} min • ` : ''}
                           <strong className="text-emerald-400">{srv.price} {currency}</strong>
                         </div>
                       </div>
@@ -296,7 +333,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 type="text"
                 value={businessNameInput}
                 onChange={(e) => setBusinessNameInput(e.target.value)}
-                placeholder="Örn: Star Kuaför & Güzellik Merkezi"
+                placeholder="e.g., Bokalist Studio"
                 className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
@@ -306,7 +343,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {t.currency}
               </label>
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {['₺', '$', '€', '£', 'kr', '₼'].map((curr) => (
+                {['kr', '€', '$', '£', '₺', 'DKK'].map((curr) => (
                   <button
                     key={curr}
                     type="button"
@@ -335,11 +372,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </form>
         )}
 
-        {/* Tab 3: Language Selector */}
+        {/* Tab 3: Language Selector (English & Svenska) */}
         {activeTab === 'language' && (
           <div className="mt-4 space-y-2.5">
             <p className="text-xs text-slate-400 mb-3">
-              Uygulamanın arayüz dilini buradan değiştirebilirsiniz:
+              {currentLanguage === 'sv' ? 'Välj språk för Bokalist:' : 'Select language for Bokalist:'}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -347,14 +384,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang)}
-                  className={`flex items-center justify-between p-3 rounded-2xl border transition text-left ${
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition text-left ${
                     currentLanguage === lang
                       ? 'bg-sky-600/20 border-sky-500 text-sky-300 ring-1 ring-sky-500'
                       : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 text-slate-200'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xl">{languageNames[lang].flag}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{languageNames[lang].flag}</span>
                     <div>
                       <span className="text-sm font-semibold block">{languageNames[lang].name}</span>
                       <span className="text-[11px] text-slate-400 uppercase">{lang}</span>
@@ -365,6 +402,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Data Storage & Backup for Netlify */}
+        {activeTab === 'backup' && (
+          <div className="mt-4 space-y-4">
+            <div className="p-3.5 rounded-2xl bg-slate-950/50 border border-slate-800">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                <HardDrive className="w-3.5 h-3.5 text-sky-400" />
+                {t.dataBackup}
+              </h4>
+              <p className="text-xs text-slate-400">
+                {t.dataStoredLocally}
+              </p>
+            </div>
+
+            {importStatus && (
+              <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs">
+                {importStatus}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleExportBackup}
+                className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-semibold text-white transition active:scale-95"
+              >
+                <Download className="w-4 h-4 text-sky-400" />
+                <span>{t.exportData}</span>
+              </button>
+
+              <label className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-semibold text-white transition cursor-pointer active:scale-95">
+                <Upload className="w-4 h-4 text-emerald-400" />
+                <span>{t.importData}</span>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportFile}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
         )}

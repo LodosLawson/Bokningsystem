@@ -100,7 +100,7 @@ export const TodayBookings: React.FC<TodayBookingsProps> = ({
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               {t.todayTitle}
               <span className="text-xs font-normal text-slate-400">
-                ({new Date().toLocaleDateString(currentLanguage === 'sv' ? 'sv-SE' : currentLanguage === 'tr' ? 'tr-TR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })})
+                ({new Date().toLocaleDateString(currentLanguage === 'sv' ? 'sv-SE' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })})
               </span>
             </h2>
           </div>

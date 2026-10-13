@@ -113,7 +113,7 @@ export const AuthScreen: React.FC = () => {
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-lg text-white tracking-tight">
-            Randevu<span className="text-sky-400">Pro</span>
+            Boka<span className="text-sky-400">list</span>
           </span>
         </div>
 
@@ -124,7 +124,7 @@ export const AuthScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => setLanguage('en')}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
                 currentLanguage === 'en'
                   ? 'bg-sky-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -136,7 +136,7 @@ export const AuthScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => setLanguage('sv')}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
                 currentLanguage === 'sv'
                   ? 'bg-sky-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -144,18 +144,6 @@ export const AuthScreen: React.FC = () => {
               title="Svenska"
             >
               🇸🇪 SV
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('tr')}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
-                currentLanguage === 'tr'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Türkçe"
-            >
-              🇹🇷 TR
             </button>
           </div>
         </div>
@@ -172,7 +160,7 @@ export const AuthScreen: React.FC = () => {
           </p>
         </div>
 
-        {/* 1. Instant / One-Click Entry (Great for testing in preview environments) */}
+        {/* 1. Instant / One-Click Entry (Local Netlify storage) */}
         <div className="mb-4">
           <button
             type="button"
@@ -182,15 +170,15 @@ export const AuthScreen: React.FC = () => {
           >
             <div className="flex items-center gap-2.5">
               <Zap className="w-4 h-4 fill-white" />
-              <span>Tek Tıkla Hemen Başla</span>
+              <span>{t.quickStart}</span>
             </div>
             <div className="flex items-center gap-1 text-xs opacity-90 group-hover:translate-x-0.5 transition">
-              <span>Giriş Yap</span>
+              <span>{currentLanguage === 'sv' ? 'Öppna' : 'Enter'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </button>
           <p className="text-[11px] text-slate-400 text-center mt-1.5">
-            Önizleme ve test için anında randevu paneline giriş yapın
+            {currentLanguage === 'sv' ? 'Snabb åtkomst för att testa bokningar direkt' : 'Fast access to start managing bookings immediately'}
           </p>
         </div>
 
@@ -347,7 +335,7 @@ export const AuthScreen: React.FC = () => {
 
       {/* Footer info */}
       <div className="text-center text-xs text-slate-500 py-3">
-        RandevuPro PWA © {new Date().getFullYear()} — Tüm Cihazlar İçin Optimize
+        Bokalist PWA © {new Date().getFullYear()} — Simple & Modern Booking
       </div>
     </div>
   );

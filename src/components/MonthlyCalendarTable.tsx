@@ -55,11 +55,7 @@ export const MonthlyCalendarTable: React.FC<MonthlyCalendarTableProps> = ({
 
   const monthYearString = useMemo(() => {
     return currentDate.toLocaleDateString(
-      currentLanguage === 'sv'
-        ? 'sv-SE'
-        : currentLanguage === 'tr'
-        ? 'tr-TR'
-        : 'en-US',
+      currentLanguage === 'sv' ? 'sv-SE' : 'en-US',
       { month: 'long', year: 'numeric' }
     );
   }, [currentDate, currentLanguage]);
@@ -156,9 +152,7 @@ export const MonthlyCalendarTable: React.FC<MonthlyCalendarTableProps> = ({
 
   const weekDayHeaders = currentLanguage === 'sv'
     ? ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön']
-    : currentLanguage === 'en'
-    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    : ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const getStatusBadge = (status: AppointmentStatus) => {
     switch (status) {
@@ -248,7 +242,7 @@ export const MonthlyCalendarTable: React.FC<MonthlyCalendarTableProps> = ({
               }`}
             >
               <List className="w-3.5 h-3.5" />
-              <span>{currentLanguage === 'sv' ? 'Tabell' : currentLanguage === 'en' ? 'Table' : 'Tablo'}</span>
+              <span>{t.table}</span>
             </button>
             <button
               onClick={() => setViewMode('calendar')}
@@ -257,7 +251,7 @@ export const MonthlyCalendarTable: React.FC<MonthlyCalendarTableProps> = ({
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
-              <span>{currentLanguage === 'sv' ? 'Kalender' : currentLanguage === 'en' ? 'Calendar' : 'Takvim'}</span>
+              <span>{t.calendar}</span>
             </button>
           </div>
         </div>
@@ -438,11 +432,7 @@ export const MonthlyCalendarTable: React.FC<MonthlyCalendarTableProps> = ({
               {filteredList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-slate-500 text-xs">
-                    {currentLanguage === 'sv'
-                      ? 'Inga bokningar matchar sökkriterierna.'
-                      : currentLanguage === 'en'
-                      ? 'No bookings found matching your search.'
-                      : 'Bu kriterlere uygun randevu kaydı bulunamadı.'}
+                    {t.noResults}
                   </td>
                 </tr>
               ) : (

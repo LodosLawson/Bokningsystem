@@ -14,9 +14,9 @@ export default defineConfig(() => {
         includeAssets: ['icon.svg'],
         manifest: {
           id: '/',
-          name: 'RandevuPro - Randevu ve Rezervasyon Sistemi',
-          short_name: 'RandevuPro',
-          description: 'Hızlı, kolay ve çok dilli profesyonel randevu ve rezervasyon yönetim sistemi.',
+          name: 'Bokalist - Smart Booking System',
+          short_name: 'Bokalist',
+          description: 'Simple, fast, and modern booking and appointment management system.',
           theme_color: '#0284c7',
           background_color: '#0f172a',
           display: 'standalone',

@@ -1,4 +1,4 @@
-export type LanguageCode = 'en' | 'sv' | 'tr';
+export type LanguageCode = 'en' | 'sv';
 
 export type AppointmentStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
 

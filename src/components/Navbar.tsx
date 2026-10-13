@@ -33,7 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div className="min-w-0">
             <span className="font-bold text-base sm:text-lg text-white tracking-tight truncate block">
-              Randevu<span className="text-sky-400">Pro</span>
+              Boka<span className="text-sky-400">list</span>
             </span>
             <p className="text-[11px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px]">
               {userProfile?.businessName || t.appSubtitle}
@@ -43,12 +43,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Fast 1-Click Language Switcher (EN & SV & TR) */}
+          {/* Fast 1-Click Language Switcher (EN & SV) */}
           <div className="flex items-center bg-slate-800/90 rounded-xl p-0.5 border border-slate-700/80">
             <button
               type="button"
               onClick={() => setLanguage('en')}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
                 currentLanguage === 'en'
                   ? 'bg-sky-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -60,7 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => setLanguage('sv')}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
                 currentLanguage === 'sv'
                   ? 'bg-sky-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -68,18 +68,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Svenska"
             >
               🇸🇪 SV
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('tr')}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition hidden sm:inline ${
-                currentLanguage === 'tr'
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Türkçe"
-            >
-              🇹🇷 TR
             </button>
           </div>
 
