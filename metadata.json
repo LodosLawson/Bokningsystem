@@ -1,0 +1,6 @@
+{
+  "name": "RandevuPro - Akıllı Randevu Yönetim Sistemi",
+  "description": "Kolay, hızlı ve çok dilli profesyonel randevu ve rezervasyon yönetim uygulaması.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle with safe margin -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)" />
+
+  <!-- Calendar Base -->
+  <g filter="url(#shadow)">
+    <rect x="96" y="112" width="320" height="296" rx="28" fill="url(#cardGrad)" />
+    
+    <!-- Header Banner of Calendar -->
+    <path d="M 96 140 C 96 124.536 108.536 112 124 112 L 388 112 C 403.464 112 416 124.536 416 140 L 416 190 L 96 190 Z" fill="#0284c7" />
+
+    <!-- Rings / Pins -->
+    <rect x="156" y="84" width="24" height="52" rx="12" fill="#38bdf8" />
+    <rect x="332" y="84" width="24" height="52" rx="12" fill="#38bdf8" />
+
+    <!-- Calendar Grid Checkmark & Time Badge -->
+    <circle cx="210" cy="270" r="18" fill="#e0f2fe" />
+    <circle cx="270" cy="270" r="18" fill="#e0f2fe" />
+    <circle cx="330" cy="270" r="18" fill="#0284c7" />
+    <!-- Checkmark inside active dot -->
+    <path d="M322 270 L327 275 L338 264" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+
+    <circle cx="150" cy="330" r="18" fill="#e0f2fe" />
+    <circle cx="210" cy="330" r="18" fill="#38bdf8" />
+    <circle cx="270" cy="330" r="18" fill="#e0f2fe" />
+    <circle cx="330" cy="330" r="18" fill="#e0f2fe" />
+
+    <!-- Clock accent pill on bottom right -->
+    <rect x="250" y="340" width="150" height="54" rx="27" fill="#0369a1" />
+    <circle cx="277" cy="367" r="14" fill="none" stroke="#ffffff" stroke-width="3" />
+    <path d="M277 359 L277 367 L283 370" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+    <text x="302" y="373" font-family="system-ui, sans-serif" font-size="19" font-weight="bold" fill="#ffffff">09:30</text>
+  </g>
+</svg>
